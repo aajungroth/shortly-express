@@ -42,15 +42,34 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 
 db.knex.schema.hasTable('users').then(function(exists) {
   if (!exists) {
-    db.knex.schema.createTable('users', function (click) {
-      click.increments('id').primary();
-      click.integer('username');
-      click.integer('password');
-      click.timestamps();
+    db.knex.schema.createTable('users', function (user) {
+      user.increments('id').primary();
+      user.integer('username');
+      user.integer('password');
+      user.timestamps();
     }).then(function (table) {
       console.log('Created Table', table);
     });
   }
 });
+
+db.knex.schema.hasTable('urlsUsers').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('urlsUsers', function (urlUser) {
+      urlUser.increments('id').primary();
+      urlUser.integer('urlId');
+      urlUser.integer('userId');
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+
+
+// innerJoin — .innerJoin(column, ~mixed~)
+// knex.from('users').innerJoin('accounts', 'users.id', 'accounts.user_id')
+// Outputs:
+// select * from `users` inner join `accounts` on `users`.`id` = `accounts`.`user_id`
+
 
 module.exports = db;
