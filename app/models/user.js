@@ -5,11 +5,11 @@ var Promise = require('bluebird');
 
 
 var User = db.Model.extend({
-  // tableName: 'clicks',
-  // hasTimestamps: true,
-  // link: function() {
-  //   return this.belongsTo(Link, 'linkId');
-  // }
+  tableName: 'users',
+  hasTimestamps: true,
+  user: function() {
+    return this.belongsTo(User, 'userId');
+  }
 });
 
 module.exports = User;
