@@ -3,6 +3,8 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 
+//added session API here
+var session = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -23,12 +25,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 //define this session here.
-// app.use(express.session());
+app.use(session({
+  secret: 'nyan cat',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: true },
+  path: '/',
+  maxAge: null,
+})
+);
 
 app.get('/',
 function(req, res) {
   res.render('index');
 });
+
 
 app.get('/create',
 function(req, res) {
@@ -74,56 +85,73 @@ function(req, res) {
   });
 });
 
+app.post('/signup', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({ username: username, password: password }).fetch().then(function(found) {
+    if (!found) {
+      res.status(200).send(found.attributes);
+      bcrypt.hash(password, null, null, function(err, hashedpassword) {
+        if (err) {
+          console.log(err);
+        } else {
+          User.create({ username: username, password: hashedpassword });
+        }
+      });
+    }
+  }
+);
+});
+
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
 
 
-function restrict(req, res, next) {
+var restrict = function(req, res, next) {
   if (req.session.user) {
     next();
   } else {
     req.session.error = 'Access denied!';
     res.redirect('/login');
   }
-}
+};
 
-app.get('/login', function(request, response) {
-  response.send('<form method="post" action="/login">' +
-  '<p>' +
-    '<label>Username:</label>' +
-    '<input type="text" name="username">' +
-  '</p>' +
-  '<p>' +
-    '<label>Password:</label>' +
-    '<input type="text" name="password">' +
-  '</p>' +
-  '<p>' +
-    '<input type="submit" value="Login">' +
-  '</p>' +
-  '</form>');
-});
+app.post('/login', function(req, res) {
+  var username = request.body.username;
+  var password = request.body.password;
 
-app.post('/login', function(request, response) {
+  bcrypt.compare(password, user.get('password'), function(err, match) {
+    if (match) {
+      util.createSession(req, res, user);
+    } else {
+      res.redirect('/login');
+    }
+  });
+//create a session
+//check each session
+//redirect them
+//logging in
+//checking password (bcrypt.comparePassword(password, User.getPassword()));
+//if there is a match allow user to log in
+//if no redirect
 
-    var username = request.body.username;
-    var password = request.body.password;
-
-    if(username == 'demo' && password == 'demo'){
+/*    if(username == 'demo' && password == 'demo'){
         request.session.regenerate(function(){
         request.session.user = username;
         response.redirect('/restricted');
         });
     } else {
        response.redirect('login');
-    }
+    }*/
 });
 
-// app.get('/logout', function(request, response){
-//     request.session.destroy(function(){
-//         response.redirect('/');
-//     });
-// });
+app.get('/logout', function(request, response) {
+  request.session.destroy(function() {
+    response.redirect('/');
+  });
+});
 
 
 /************************************************************/
