@@ -30,12 +30,11 @@ app.use(express.static(__dirname + '/public'));
 app.use(session({
   secret: 'nyan cat',
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true },
-  path: '/',
-  maxAge: null,
-})
-);
+  saveUninitialized: true//,
+//   cookie: { secure: true },
+//   path: '/',
+//   maxAge: null,
+}));
 
 app.get('/', util.checkUser,
 function(req, res) {
@@ -58,7 +57,7 @@ function(req, res) {
 app.post('/links', util.checkUser,
 function(req, res) {
   var uri = req.body.url;
-
+  console.log(uri);
   if (!util.isValidUrl(uri)) {
     console.log('Not a valid url: ', uri);
     return res.sendStatus(404);
@@ -91,14 +90,16 @@ app.post('/signup', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
+  // console.log('req body', req.body);
+
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (!found) {
-      res.status(200).send(found.attributes);
+      // res.status(200).send(found.attributes);
       bcrypt.hash(password, null, null, function(err, hashedpassword) {
         if (err) {
           console.log(err);
         } else {
-          User.create({ username: username, password: hashedpassword }).then(function(user) {
+          Users.create({ username: username, password: hashedpassword }).then(function(user) {
             util.createSession(req, res, user);
           });
         }
@@ -124,6 +125,8 @@ app.get('/login', function(req, res) {
 app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
+
+  // console.log('req.body:', req.body);
 
   new User({username: username}).fetch().then(function(user) {
     if (!user) {
