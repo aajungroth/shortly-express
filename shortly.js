@@ -5,6 +5,8 @@ var bodyParser = require('body-parser');
 
 //added session API here
 var session = require('express-session');
+var bcrypt = require('bcrypt-nodejs');
+var Promise = require('bluebird');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -35,25 +37,25 @@ app.use(session({
 })
 );
 
-app.get('/',
+app.get('/', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
 
-app.get('/create',
+app.get('/create', util.checkUser,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links',
+app.get('/links', util.checkUser,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.status(200).send(links.models);
   });
 });
 
-app.post('/links',
+app.post('/links', util.checkUser,
 function(req, res) {
   var uri = req.body.url;
 
@@ -96,37 +98,44 @@ app.post('/signup', function(req, res) {
         if (err) {
           console.log(err);
         } else {
-          User.create({ username: username, password: hashedpassword });
+          User.create({ username: username, password: hashedpassword }).then(function(user) {
+            util.createSession(req, res, user);
+          });
         }
       });
+    } else {
+      res.redirect('/signup');
     }
   }
 );
 });
 
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
+
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-
-
-var restrict = function(req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    req.session.error = 'Access denied!';
-    res.redirect('/login');
-  }
-};
+app.get('/login', function(req, res) {
+  res.render('login');
+});
 
 app.post('/login', function(req, res) {
-  var username = request.body.username;
-  var password = request.body.password;
+  var username = req.body.username;
+  var password = req.body.password;
 
-  bcrypt.compare(password, user.get('password'), function(err, match) {
-    if (match) {
-      util.createSession(req, res, user);
-    } else {
+  new User({username: username}).fetch().then(function(user) {
+    if (!user) {
       res.redirect('/login');
+    } else {
+      bcrypt.compare(password, user.get('password'), function(err, match) {
+        if (match) {
+          util.createSession(req, res, user);
+        } else {
+          res.redirect('/login');
+        }
+      });
     }
   });
 //create a session
@@ -149,7 +158,7 @@ app.post('/login', function(req, res) {
 
 app.get('/logout', function(request, response) {
   request.session.destroy(function() {
-    response.redirect('/');
+    response.redirect('/login');
   });
 });
 
