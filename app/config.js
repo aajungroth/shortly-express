@@ -12,7 +12,7 @@ db.knex.delete();
 
 db.knex.schema.hasTable('urls').then(function(exists) {
   if (exists) {
-    console.log('here');
+    //console.log('here');
   } else if (!exists) {
     db.knex.schema.createTable('urls', function (link) {
       link.increments('id').primary();

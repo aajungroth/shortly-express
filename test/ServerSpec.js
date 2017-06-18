@@ -75,7 +75,8 @@ describe('', function() {
   describe('Link creation:', function() {
 
     var requestWithSession = request.defaults({jar: true});
-
+    //Gives the tests enought time to finish
+    this.timeout(15000);
     beforeEach(function(done) {
       // create a user that we can then log-in with
       new User({
@@ -92,7 +93,9 @@ describe('', function() {
           }
         };
         // login via form and save session info
+        //console.log('Phillip logged in');
         requestWithSession(options, function(error, res, body) {
+          //console.log('body:', body);
           done();
         });
       });
@@ -106,7 +109,7 @@ describe('', function() {
           'url': 'definitely not a valid url'
         }
       };
-
+      //console.log('sending invalid url');
       requestWithSession(options, function(error, res, body) {
         // res comes from the request module, and may not follow express conventions
         expect(res.statusCode).to.equal(404);
